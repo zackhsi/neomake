@@ -104,7 +104,7 @@ function! neomake#statusline#get_filtered_counts(bufnr, ...) abort
     let exclude = a:0 > 1 ? a:2 : []
     let empty = a:0 > 2 ? a:3 : ''
 
-    let [loclist_counts, qf_errors] = GetNeomakeCounts(a:bufnr, 1)
+    let [loclist_counts, qf_errors] = neomake#statusline#get_counts(a:bufnr)
 
     let errors = []
     for [type, c] in items(loclist_counts)
@@ -120,7 +120,7 @@ function! neomake#statusline#get_filtered_counts(bufnr, ...) abort
         endfor
     endif
     if len(errors)
-        return ' '.join(errors).' '
+        return ' '.join(errors)
     endif
     return empty
 endfunction
