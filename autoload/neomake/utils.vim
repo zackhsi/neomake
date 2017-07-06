@@ -446,6 +446,15 @@ function! neomake#utils#redir(cmd) abort
     return neomake_redir
 endfunction
 
+" Wrap neomake#utils#redir, and return a list of the trimmed output.
+function! neomake#utils#redir_trim_list(cmd) abort
+    let output = neomake#utils#redir(a:cmd)
+    if output[0] ==# "\n"
+        let output = output[1:-1]
+    endif
+    return split(output, "\n")
+endfunction
+
 function! neomake#utils#ExpandArgs(args) abort
     " Expand % in args like when using :!
     " \% is ignored
