@@ -28,7 +28,7 @@ Execute (neomake#CompleteMakers: completes space after Neomake!):
 
 Execute (neomake#CompleteMakers: completes all makers, preferring filetype):
   new
-  set ft=rust
+  noautocmd set ft=rust
 
   " Neomake! completes ft makers (first), and project makers.
   AssertEqual neomake#CompleteMakers('', 'Neomake! '), [
