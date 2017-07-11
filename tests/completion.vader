@@ -29,7 +29,7 @@ Execute (neomake#CompleteMakers: completes space after Neomake!):
   AssertEqual neomake#CompleteMakers('', 'Neomake!'), [' ']
 
 Execute (neomake#CompleteMakers: completes all (executable) makers, preferring filetype):
-  call NeomakeTestsSetPATH('')
+  call g:NeomakeTestsSetPATH('')
   new
   noautocmd set ft=rust
 
