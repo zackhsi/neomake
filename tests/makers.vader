@@ -436,7 +436,7 @@ Execute (neomake#Make uses current filetype by default):
 Execute (Neomake/Neomake! run ft maker in project mode):
   call g:NeomakeSetupAutocmdWrappers()
   new
-  edit tests/fixtures/a filename with spaces
+  edit tests/fixtures/a\ filename\ with\ spaces
   set ft=neomake_tests
 
   Neomake echo_args
