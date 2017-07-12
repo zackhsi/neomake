@@ -5,6 +5,7 @@ language: none
 branches:
   only:
     - master
+    - next
 
 env:
   global:
