@@ -118,7 +118,8 @@ function! g:NeomakeTestsCreateExe(name, lines)
     call setfperm(exe, 'rwxrwx---')
   else
     " XXX: Windows support
-    call system('chmod 770 '.shellescape(exe))
+    call system('/bin/chmod 770 '.shellescape(exe))
+    Assert !v:shell_error, 'Got shell_error with chmod: '.v:shell_error
   endif
 endfunction
 
