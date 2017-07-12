@@ -1049,6 +1049,7 @@ function! s:AddExprCallback(jobinfo, prev_index) abort
         let s:postprocessors = s:postprocess
     endif
     let debug = neomake#utils#get_verbosity(a:jobinfo) >= 3 || !empty(get(g:, 'neomake_logfile'))
+    let maker_name = get(maker, 'name', 'makeprg')
     let make_info = s:make_info[a:jobinfo.make_id]
     let default_type = 'unset'
 
@@ -1060,7 +1061,7 @@ function! s:AddExprCallback(jobinfo, prev_index) abort
     while index < llen - 1
         let index += 1
         let entry = list[index]
-        let entry.maker_name = has_key(maker, 'name') ? maker.name : 'makeprg'
+        let entry.maker_name = maker_name
 
         let before = copy(entry)
         if file_mode && has_key(make_info, 'tempfiles')
@@ -1131,6 +1132,17 @@ function! s:AddExprCallback(jobinfo, prev_index) abort
         endif
         call add(entries, entry)
     endwhile
+
+    " Add marker for custom quickfix to the first (new) entry.
+    if neomake#quickfix#is_enabled() && !empty(entries)
+        let config = {
+                    \ 'name': maker_name,
+                    \ 'short': get(a:jobinfo.maker, 'short_name', maker_name[:3]),
+                    \ }
+        let marker_entry = entries[0]
+        let marker_entry.text .= printf(' nmcfg:%s', string(config))
+        let changed_entries[a:prev_index+1] = marker_entry
+    endif
 
     if !empty(changed_entries) || !empty(removed_entries)
         let list = file_mode ? getloclist(0) : getqflist()
@@ -1389,6 +1401,7 @@ function! s:ProcessEntries(jobinfo, entries, ...) abort
         let prev_list = a:1
     else
         " Fix entries with get_list_entries/process_output.
+        let maker_name = a:jobinfo.maker.name
         call map(a:entries, 'extend(v:val, {'
                     \ . "'bufnr': str2nr(get(v:val, 'bufnr', 0)),"
                     \ . "'lnum': str2nr(v:val.lnum),"
@@ -1396,8 +1409,18 @@ function! s:ProcessEntries(jobinfo, entries, ...) abort
                     \ . "'vcol': str2nr(get(v:val, 'vcol', 0)),"
                     \ . "'type': get(v:val, 'type', 'E'),"
                     \ . "'nr': get(v:val, 'nr', -1),"
-                    \ . "'maker_name': a:jobinfo.maker.name,"
+                    \ . "'maker_name': maker_name,"
                     \ . '})')
+
+        " Add marker for custom quickfix to the first (new) entry.
+        if neomake#quickfix#is_enabled()
+            let config = {
+                        \ 'name': maker_name,
+                        \ 'short': get(a:jobinfo.maker, 'short_name', maker_name[:3]),
+                        \ }
+            let entry = a:entries[0]
+            let entry.text .= printf(' nmcfg:%s', string(config))
+        endif
 
         let prev_list = file_mode ? getloclist(0) : getqflist()
 
