@@ -66,7 +66,9 @@ endfunction
 command! -nargs=+ NeomakeTestsWaitForMessage call s:wait_for_message(<args>)
 
 function! s:wait_for_finished_job()
-  Assert neomake#has_async_support(), 'NeomakeTestsWaitForNextFinishedJob should only be used for async mode'
+  if !neomake#has_async_support() && !has('timers')
+    return
+  endif
   if !exists('#neomake_tests')
     call g:NeomakeSetupAutocmdWrappers()
   endif
@@ -286,12 +288,16 @@ function! NeomakeTestsCommandMaker(name, cmd)
 endfunction
 
 function! NeomakeTestsFakeJobinfo() abort
+  let options = {'file_mode': 1, 'bufnr': bufnr('%'), 'ft': ''}
+  let make_id = -42
+  let jobinfo = extend(copy(options), {'make_id': make_id})
   let make_info = neomake#GetStatus().make_info
-  let make_info[-42] = {
+  let make_info[make_id] = {
+        \ 'options': options,
         \ 'verbosity': get(g:, 'neomake_verbose', 1),
         \ 'active_jobs': [],
         \ 'queued_jobs': []}
-  return {'file_mode': 1, 'bufnr': bufnr('%'), 'ft': '', 'make_id': -42}
+  return jobinfo
 endfunction
 
 function! s:monkeypatch_highlights() abort
@@ -324,7 +330,18 @@ function! g:error_maker.postprocess(entry) abort
 endfunction
 let g:success_maker = NeomakeTestsCommandMaker('success-maker', 'echo success')
 let g:true_maker = NeomakeTestsCommandMaker('true-maker', 'true')
+let g:entry_maker = {}
+function! g:entry_maker.get_list_entries(jobinfo) abort
+  return get(g:, 'neomake_test_getlistentries', [
+  \   {'text': 'error', 'lnum': 1, 'type': 'E'}])
+endfunction
 let g:doesnotexist_maker = {'exe': 'doesnotexist'}
+let g:sleep_entry_maker = {}
+function! g:sleep_entry_maker.get_list_entries(jobinfo) abort
+  sleep 10m
+  return get(g:, 'neomake_test_getlistentries', [
+  \   {'text': 'slept', 'lnum': 1}])
+endfunction
 
 " A maker that generates incrementing errors.
 let g:neomake_test_inc_maker_counter = 0
@@ -354,6 +371,11 @@ function! s:After()
   if exists('g:neomake_tests_highlight_lengths')
     " Undo monkeypatch.
     runtime autoload/neomake/highlights.vim
+  endif
+
+  if exists('#neomake_automake')
+    au! neomake_automake
+    au! neomake_automake_update
   endif
 
   Restore

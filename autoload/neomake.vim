@@ -244,6 +244,7 @@ function! s:MakeJob(make_id, options) abort
         else
             call s:ProcessEntries(jobinfo, entries)
         endif
+        let jobinfo.finished = 1
         call s:CleanJobinfo(jobinfo)
         return jobinfo
     endif
@@ -523,6 +524,16 @@ function! s:command_maker_base._get_fname_for_buffer(jobinfo) abort
         endif
         let a:jobinfo.tempfile = temp_file
     endif
+
+    " TODO: only if automake is enabled?!
+    if !has_key(make_info, 'automake_tick')
+        let tick = [getbufvar(a:jobinfo.bufnr, 'changedtick'),
+                    \  a:jobinfo.ft]
+        let make_info.automake_tick = tick
+        call neomake#utils#DebugMessage('Setting neomake_automake_tick.', a:jobinfo)
+        call setbufvar(a:jobinfo.bufnr, 'neomake_automake_tick', tick)
+    endif
+
     let a:jobinfo.filename = bufname
     return bufname
 endfunction
@@ -1251,6 +1262,11 @@ function! s:clean_make_info(make_id) abort
                 call delete(dir, 'd')
             endfor
         endif
+    endif
+
+    let buf_prev_make = getbufvar(make_info.options.bufnr, 'neomake_automake_make_id')
+    if !empty(buf_prev_make) && buf_prev_make == a:make_id
+        call setbufvar(make_info.options.bufnr, 'neomake_automake_make_id', '')
     endif
 
     unlet s:make_info[a:make_id]
