@@ -401,7 +401,12 @@ function! s:After()
   if !empty(make_info)
     call add(errors, 'make_info is not empty: '.string(make_info))
   endif
-  NeomakeTestsWaitForRemovedJobs
+  try
+    NeomakeTestsWaitForRemovedJobs
+  catch
+    NeomakeCancelJobs!
+    call add(errors, v:exception)
+  endtry
 
   if exists('#neomake_tests')
     autocmd! neomake_tests
@@ -461,6 +466,12 @@ function! s:After()
   if !empty(new_funcs)
     call add(errors, 'New global functions (use script-local ones, or :delfunction to clean them): '.string(new_funcs))
     call extend(g:neomake_test_funcs_before, new_funcs)
+  endif
+
+  if exists('#neomake_event_queue')
+    call add(errors, '#neomake_event_queue was not empty.')
+    autocmd! neomake_event_queue
+    augroup! neomake_event_queue
   endif
 
   if !empty(errors)

@@ -121,6 +121,17 @@ function! neomake#CancelJob(job_id, ...) abort
         return 0
     endif
 
+    if remove_always
+        " Remove any queued action.
+        for [k, q] in items(s:action_queue)
+            for v in q
+                if v[1][0] == jobinfo
+                    unlet s:action_queue[k]
+                endif
+            endfor
+        endfor
+    endif
+
     if get(jobinfo, 'canceled', 0)
         call neomake#utils#LoudMessage('Job was canceled already.', jobinfo)
         if remove_always
@@ -913,14 +924,18 @@ function! s:process_action_queue(event) abort
             call s:clean_make_info(jobinfo.make_id)
         endif
     endfor
+    " Cleanup augroup.
     if empty(queue)
-        if empty(keys(s:action_queue))
-            autocmd! neomake_event_queue
-        else
-            augroup neomake_event_queue
-                exe 'au! '.a:event
-            augroup END
-        endif
+        for v in values(s:action_queue)
+            if !empty(v)
+                augroup neomake_event_queue
+                    exe 'au! '.a:event
+                augroup END
+                return
+            endif
+        endfor
+        autocmd! neomake_event_queue
+        augroup! neomake_event_queue
     endif
 endfunction
 
