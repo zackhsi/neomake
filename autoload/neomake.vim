@@ -1154,7 +1154,7 @@ function! s:AddExprCallback(jobinfo, prev_index) abort
                     \ 'name': maker_name,
                     \ 'short': get(a:jobinfo.maker, 'short_name', maker_name[:3]),
                     \ }
-        let marker_entry = entries[0]
+        let marker_entry = copy(entries[0])
         let marker_entry.text .= printf(' nmcfg:%s', string(config))
         let changed_entries[a:prev_index+1] = marker_entry
     endif
@@ -1427,16 +1427,6 @@ function! s:ProcessEntries(jobinfo, entries, ...) abort
                     \ . "'maker_name': maker_name,"
                     \ . '})')
 
-        " Add marker for custom quickfix to the first (new) entry.
-        if neomake#quickfix#is_enabled() && !empty(a:entries)
-            let config = {
-                        \ 'name': maker_name,
-                        \ 'short': get(a:jobinfo.maker, 'short_name', maker_name[:3]),
-                        \ }
-            let entry = a:entries[0]
-            let entry.text .= printf(' nmcfg:%s', string(config))
-        endif
-
         let prev_list = file_mode ? getloclist(0) : getqflist()
 
         let [cd_error, cwd, cd_back_cmd] = s:cd_to_jobs_cwd(a:jobinfo)
@@ -1446,17 +1436,29 @@ function! s:ProcessEntries(jobinfo, entries, ...) abort
                         \ cwd, cd_error), a:jobinfo)
         endif
         try
+            let list_entries = a:entries
+            " Add marker for custom quickfix to the first (new) entry.
+            if neomake#quickfix#is_enabled() && !empty(a:entries)
+                let config = {
+                            \ 'name': maker_name,
+                            \ 'short': get(a:jobinfo.maker, 'short_name', maker_name[:3]),
+                            \ }
+                let marker_entry = copy(a:entries[0])
+                let marker_entry.text .= printf(' nmcfg:%s', string(config))
+                let list_entries = [marker_entry] + a:entries[1:]
+            endif
+
             if file_mode
                 if s:needs_to_replace_qf_for_lwindow
-                    call setloclist(0, getloclist(0) + a:entries, 'r')
+                    call setloclist(0, getloclist(0) + list_entries, 'r')
                 else
-                    call setloclist(0, a:entries, 'a')
+                    call setloclist(0, list_entries, 'a')
                 endif
             else
                 if s:needs_to_replace_qf_for_lwindow
-                    call setqflist(getqflist() + a:entries, 'r')
+                    call setqflist(getqflist() + list_entries, 'r')
                 else
-                    call setqflist(a:entries, 'a')
+                    call setqflist(list_entries, 'a')
                 endif
             endif
         finally
@@ -2086,13 +2088,7 @@ function! s:handle_next_job(prev_jobinfo) abort
     return {}
 endfunction
 
-function! neomake#EchoCurrentError(...) abort
-    " a:1 might be a timer from the VimResized event.
-    let force = a:0 ? a:1 : 0
-    if !force && !get(g:, 'neomake_echo_current_error', 1)
-        return
-    endif
-
+function! neomake#GetCurrentErrorMsg() abort
     let buf = bufnr('%')
     let ln = line('.')
     let ln_errors = []
@@ -2103,11 +2099,7 @@ function! neomake#EchoCurrentError(...) abort
     endfor
 
     if empty(ln_errors)
-        if exists('s:neomake_last_echoed_error')
-            echon ''
-            unlet s:neomake_last_echoed_error
-        endif
-        return
+        return ''
     endif
 
     if len(ln_errors) > 1
@@ -2115,13 +2107,29 @@ function! neomake#EchoCurrentError(...) abort
         call sort(ln_errors, function('neomake#utils#sort_by_col'))
     endif
     let error_entry = ln_errors[0]
-    if !force && exists('s:neomake_last_echoed_error')
-                \ && s:neomake_last_echoed_error == error_entry
+    return error_entry.maker_name.': '.error_entry.text
+endfunction
+
+function! neomake#EchoCurrentError(...) abort
+    " a:1 might be a timer from the VimResized event.
+    let force = a:0 ? a:1 : 0
+    if !force && !get(g:, 'neomake_echo_current_error', 1)
         return
     endif
-    let s:neomake_last_echoed_error = error_entry
 
-    let message = error_entry.maker_name.': '.error_entry.text
+    let message = neomake#GetCurrentErrorMsg()
+    if empty(message)
+        if exists('s:neomake_last_echoed_error')
+            echon ''
+            unlet s:neomake_last_echoed_error
+        endif
+        return
+    endif
+    if !force && exists('s:neomake_last_echoed_error')
+                \ && s:neomake_last_echoed_error == message
+        return
+    endif
+    let s:neomake_last_echoed_error = message
     call neomake#utils#WideMessage(message)
 endfunction
 
