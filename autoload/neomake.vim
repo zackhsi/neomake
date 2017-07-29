@@ -1488,17 +1488,11 @@ function! s:cd_to_jobs_cwd(jobinfo) abort
     return ['', cwd, '']
 endfunction
 
-let s:retry_func = {}
-" TODO: rename, does not need to be a dict func.
-function! s:retry_func.pcall(fn, args, ...) abort
-    let timer = a:0 ? a:1 : 0
+" Call a:fn with a:args and queue it, in case if fails with E48/E523.
+function! s:pcall(fn, args) abort
     let jobinfo = a:args[0]
     try
-        let R = call(a:fn, a:args + [1])
-        if timer
-            unlet self.callbacks[timer]
-        endif
-        return R
+        return call(a:fn, a:args + [1])
     catch /^\%(Vim\%((\a\+)\)\=:\%(E48\|E523\)\)/  " only E48/E523 (sandbox / not allowed here)
         call neomake#utils#DebugMessage('Error during pcall: '.v:exception.'.', jobinfo)
         call neomake#utils#DebugMessage(printf('(in %s)', v:throwpoint), jobinfo)
@@ -1522,7 +1516,7 @@ function! s:ProcessEntries(jobinfo, entries, ...) abort
                     \ [a:jobinfo, a:entries] + a:000])
     endif
     if !a:0 || type(a:[len(a:000)]) != 0
-        return s:retry_func.pcall('s:ProcessEntries', [a:jobinfo, a:entries] + a:000)
+        return s:pcall('s:ProcessEntries', [a:jobinfo, a:entries] + a:000)
     endif
     let file_mode = a:jobinfo.file_mode
 
@@ -1671,7 +1665,7 @@ function! s:ProcessJobOutput(jobinfo, lines, source, ...) abort
                     \ [a:jobinfo, a:lines, a:source]])
     endif
     if !a:0
-        return s:retry_func.pcall('s:ProcessJobOutput', [a:jobinfo, a:lines, a:source])
+        return s:pcall('s:ProcessJobOutput', [a:jobinfo, a:lines, a:source])
     endif
 
     let maker = a:jobinfo.maker
