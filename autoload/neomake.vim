@@ -1488,7 +1488,8 @@ function! s:cd_to_jobs_cwd(jobinfo) abort
     return ['', cwd, '']
 endfunction
 
-let s:retry_func = {'callbacks': {}, 'queue': []}
+let s:retry_func = {}
+" TODO: rename, does not need to be a dict func.
 function! s:retry_func.pcall(fn, args, ...) abort
     let timer = a:0 ? a:1 : 0
     let jobinfo = a:args[0]
