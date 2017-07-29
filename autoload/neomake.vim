@@ -1489,10 +1489,6 @@ function! s:cd_to_jobs_cwd(jobinfo) abort
 endfunction
 
 let s:retry_func = {'callbacks': {}, 'queue': []}
-function! s:retry_func.cb(timer) abort
-    let cb = self.callbacks[a:timer]
-    return self.pcall(cb[0], cb[1], a:timer)
-endfunction
 function! s:retry_func.pcall(fn, args, ...) abort
     let timer = a:0 ? a:1 : 0
     let jobinfo = a:args[0]
