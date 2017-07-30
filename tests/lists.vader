@@ -327,7 +327,7 @@ Execute (Goes back to original window after opening list (wincmd in autocmd)):
     AssertNeomakeMessage 'Postponing location list processing.'
     AssertNeomakeMessage 'Queueing action: s:AddExprCallback for WinEnter.'
     AssertNeomakeMessage 'action queue: requeueing s:AddExprCallback for failed call.'
-    AssertNeomakeMessage 'action queue: requeueing s:CleanJobinfo for already requeued jobinfo.'
+    AssertNeomakeMessage 'action queue: requeueing s:CleanJobinfo for already requeued action.'
     AssertNeomakeMessage 'action queue: processed 0 items.'
     exe winnr.'wincmd w'
     AssertNeomakeMessage 'action queue: processing for WinEnter (2 items, winnr: 3).'
