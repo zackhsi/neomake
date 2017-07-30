@@ -893,7 +893,7 @@ function! s:process_action_queue(event) abort
         let jobinfo = data[1][0]
         if !empty(filter(copy(requeue), 'v:val[1][0] == jobinfo'))
             call neomake#utils#DebugMessage(printf(
-                        \ 'action queue: requeueing %s for already requeued jobinfo.',
+                        \ 'action queue: requeueing %s for already requeued action.',
                         \ data[0]), jobinfo)
         else
             call neomake#utils#DebugMessage(printf('action queue: calling %s.',
