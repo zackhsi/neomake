@@ -61,7 +61,7 @@ Execute (LoclistCounts for wiped buffer should clean s:loclist_counts):
 
 Execute (neomake#statusline#get_status):
   let bufnr = bufnr('')
-  AssertEqual neomake#statusline#get_status(bufnr, {}), '✓'
+  AssertEqual neomake#statusline#get_status(bufnr, {}), '%#NeomakeStatusGood#✓'
 
   call neomake#Make({'enabled_makers': [g:sleep_maker]})
   if neomake#has_async_support()
@@ -77,6 +77,6 @@ Execute (neomake#statusline#get_status):
 
   let options = {neomake#has_async_support() ? 'format_running' : 'format_ok': 'Neomake: {{does_not_exist}}'}
   call neomake#statusline#get_status(bufnr(''), options)
-  AssertNeomakeMessage 'Unknown statusline format: does_not_exist.', 0
+  AssertNeomakeMessage 'Unknown statusline format: {{does_not_exist}}.', 0
 
   NeomakeTestsWaitForFinishedJobs
