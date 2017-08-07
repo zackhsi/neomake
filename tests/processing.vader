@@ -643,16 +643,15 @@ Execute (job finishes while in tabline function):
     let g:neomake_test_flagfile = tempname()
 
     function! s:NeomakeTestTabline()
-      call neomake#utils#DebugMessage('tabline_start.')
       call writefile(['1'], g:neomake_test_flagfile)
       while 1
-        sleep 1m
         if !filereadable(g:neomake_test_flagfile)
           break
         endif
+        sleep 1m
       endwhile
-      " Vim needs one more sleep here.
-      sleep 1m
+      NeomakeTestsWaitForMessage 'Error during pcall: Vim(laddexpr):E523: Not allowed here:                 laddexpr a:lines.', 3
+      AssertNeomakeMessage '\v\(in function .*\.\.\<SNR\>\d+_NeomakeTestTabline\[\d+\]\.\..*\)', 3
       call neomake#utils#DebugMessage('tabline_end.')
     endfunction
 
@@ -664,9 +663,6 @@ Execute (job finishes while in tabline function):
     let jobinfo = neomake#GetJob(neomake#Make(1, [maker1])[0])
     redraw
     NeomakeTestsWaitForFinishedJobs
-    AssertNeomakeMessage 'tabline_start.', 3
-    AssertNeomakeMessage 'Error during pcall: Vim(laddexpr):E523: Not allowed here:                 laddexpr a:lines.', 3
-    AssertNeomakeMessage '\v\(in function .*\.\.\<SNR\>\d+_NeomakeTestTabline\[\d+\]\.\..*\)', 3
 
     AssertNeomakeMessage 'Skipping cleaning of job info because of queued actions: s:ProcessJobOutput.'
     AssertNeomakeMessage 'Queueing action: s:CleanJobinfo for WinEnter.'
