@@ -1227,6 +1227,7 @@ function! s:CleanJobinfo(jobinfo) abort
 
         call s:HandleLoclistQflistDisplay(a:jobinfo)
         call neomake#EchoCurrentError(1)
+        call neomake#statusline#buffer_finished(a:jobinfo.bufnr)
 
         call neomake#utils#hook('NeomakeFinished', {'jobinfo': a:jobinfo})
     endif
