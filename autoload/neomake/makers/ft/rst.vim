@@ -34,6 +34,9 @@ function! neomake#makers#ft#rst#rstcheck() abort
 endfunction
 
 function! neomake#makers#ft#rst#sphinx() abort
+    " TODO:
+    "  - project mode (after cleanup branch)
+    "  - fix/verify errorformat (WARNING; what is 3 there)?!
     if !exists('s:sphinx_cache')
         let s:sphinx_cache = tempname()
     endif
